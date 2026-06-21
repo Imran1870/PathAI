@@ -11,10 +11,20 @@ const  app = express()
 
 import { connectDB } from "./config/db.js"
 const PORT = process.env.PORT || 5000;
-// Add this before your routes
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://path-ai-self.vercel.app"
+];
+
 app.use(cors({
-    origin: "http://localhost:5173", // The port your React app will run on
-    credentials: true // ABSOLUTELY CRUCIAL: This allows the HTTP-only JWT cookie to be sent back and forth
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true
 }));
 
 app.use(express.json())
