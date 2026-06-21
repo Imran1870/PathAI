@@ -11,10 +11,10 @@ const uploadResumeToCloudinary = async(req,res)=>{
     let cloudinaryPublicId = null;
 
     try{
-        const uploadResume = await cloudinary.uploader.upload(req.file.path,{resource_type:"raw"})
-        if(!uploadResume)return res.status(500).json({message:"Error uplaoding file. Try again"})
-             cloudinaryPublicId = uploadResume.public_id; 
-            console.log("Hellna")
+        const uploadResult = await cloudinary.uploader.upload(req.file.path,{resource_type:"raw"})
+        if(!uploadResult)return res.status(500).json({message:"Error uploading file. Try again"})
+        cloudinaryPublicId = uploadResult.public_id;
+        console.log("Cloudinary upload success:", cloudinaryPublicId)
         
         //parsing from local file
         
@@ -41,13 +41,12 @@ const uploadResumeToCloudinary = async(req,res)=>{
 
 
         const newResume = new Resume({
-            userId:req.userId,
+            userId: req.userId,
             fileName: req.file.originalname,
-            fileUrl:uploadResult.secure_url,
-            parsedText:parsedData.text
-
+            fileUrl: uploadResult.secure_url,
+            parsedText: parsedData.text
         })
-            console.log("Hellna")
+        console.log("Resume model created")
 
         await newResume.save();
             console.log("Hellna")
