@@ -12,7 +12,7 @@ export const useAuth = ()=>{
 export const AuthProvider = ({children})=>{
 const [user,setUser] = useState(null)
 const [loading,setLoading] = useState(true)
-axios.defaults.baseURL = "https://pathai-7fmi.onrender.com" || "http://localhost:5000/api";
+axios.defaults.baseURL = "https://pathai-7fmi.onrender.com/api" || "http://localhost:5000/api";
 axios.defaults.withCredentials = true;
 
 
