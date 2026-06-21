@@ -1,1 +1,80 @@
 @import "tailwindcss";
+
+/* ─── Design Token Overrides ─────────────────────────────────────── */
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ─── Global Base ────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  background-color: #f9f9f6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  background-color: #f9f9f6;
+  color: #1a1a1a;
+}
+
+/* ─── Skeleton Shimmer ───────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -800px 0;
+  }
+  100% {
+    background-position: 800px 0;
+  }
+}
+
+.shimmer-block {
+  background: linear-gradient(
+    90deg,
+    #e6e6e2 0px,
+    #efefe9 200px,
+    #e6e6e2 400px
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* ─── Accordion Slide-Down ───────────────────────────────────────── */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Top Progress Bar ───────────────────────────────────────────── */
+@keyframes progress-fill {
+  0%   { transform: scaleX(0.0); }
+  30%  { transform: scaleX(0.45); }
+  65%  { transform: scaleX(0.72); }
+  90%  { transform: scaleX(0.90); }
+  100% { transform: scaleX(1.0); }
+}
+
+.animate-progress-bar {
+  transform-origin: left center;
+  animation: progress-fill 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

@@ -13,32 +13,49 @@ const uploadResumeToCloudinary = async(req,res)=>{
     try{
         const uploadResume = await cloudinary.uploader.upload(req.file.path,{resource_type:"raw"})
         if(!uploadResume)return res.status(500).json({message:"Error uplaoding file. Try again"})
-             cloudinaryPublicId = uploadResult.public_id; 
+             cloudinaryPublicId = uploadResume.public_id; 
+            console.log("Hellna")
         
         //parsing from local file
         
 
         //  Read the local file and parse the text BEFORE we delete it!
         const dataBuffer = fs.readFileSync(req.file.path);
+            console.log("Hellna")
+
         const parser = new PDFParse({ data: dataBuffer });
+            console.log("Hellna")
+
         const parsedData = await parser.getText()
+            console.log("Hellna")
+
 
         // pdf-parse returns an object. The actual words are inside the .text property
         const extractedText = parsedData.text;
+            console.log("Hellna")
+
         // 3. Clean up the memory (good practice for v2!)
         await parser.destroy();
+            console.log("Hellna")
+
 
 
         const newResume = new Resume({
             userId:req.userId,
             fileName: req.file.originalname,
-            fileUrl:uploadResume.secure_url,
+            fileUrl:uploadResult.secure_url,
             parsedText:parsedData.text
 
         })
+            console.log("Hellna")
+
         await newResume.save();
+            console.log("Hellna")
+
         
         fs.unlinkSync(req.file.path);
+            console.log("Hellna")
+
         
         // Return success to the frontend
         return res.status(201).json({ 
@@ -47,6 +64,7 @@ const uploadResumeToCloudinary = async(req,res)=>{
             // We can send a little preview of the text back just to prove it worked!
             textPreview: extractedText.substring(0, 100) + "..." 
         });
+        
 
 
     }

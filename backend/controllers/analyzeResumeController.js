@@ -3,8 +3,6 @@ import { Resume } from "../models/resumeModel.js";
 import { Analysis } from "../models/analysisModel.js";
 
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
  const analyzeResume = async (req,res)=>{
     const {resumeId,targetRole,jobDescription,currentScenario} = req.body;
    // Guard before destructuring
@@ -44,11 +42,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                 "good_project_questions": [ { "question": <string>, "answer": <string> } ]
             }
         `;
+        // Initialised here (not at module level) so process.env is read
+        // AFTER dotenv has loaded — ES module imports are hoisted before dotenv.config() runs
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
             model:"gemini-2.5-flash",
             generationConfig: {
-                // This is the magic line that forces the AI to ONLY return JSON
-                responseMimeType: "application/json", 
+                responseMimeType: "application/json",
             }
         })
        const result = await model.generateContent(prompt)
