@@ -5,15 +5,29 @@ import { Analysis } from "../models/analysisModel.js";
 
  const analyzeResume = async (req,res)=>{
     const {resumeId,targetRole,jobDescription,currentScenario} = req.body;
+    console.log("[1] analyzeResume called — resumeId:", resumeId, "| targetRole:", targetRole);
+
    // Guard before destructuring
         if (!currentScenario || typeof currentScenario !== "object") {
             return res.status(400).json({ message: "currentScenario is required" });
         }
         const { goal, year, currentSkills } = currentScenario;
+        console.log("[2] currentScenario parsed — goal:", goal, "| year:", year, "| skills:", currentSkills);
+
     try{
+        console.log("[3] Looking up resume in DB...");
         const parsedResumeText = await Resume.findById(resumeId).select("parsedText");
         if (!parsedResumeText) { return res.status(404).json({message: "Resume not found"}) }
+        console.log("[4] Resume found. Text length:", parsedResumeText.parsedText?.length);
 
+        console.log("[5] Initialising Gemini — key present:", !!process.env.GEMINI_API_KEY);
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model:"gemini-2.5-flash",
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        })
 
        const prompt = `
             You are an expert technical recruiter and career coach.
@@ -42,20 +56,17 @@ import { Analysis } from "../models/analysisModel.js";
                 "good_project_questions": [ { "question": <string>, "answer": <string> } ]
             }
         `;
-        // Initialised here (not at module level) so process.env is read
-        // AFTER dotenv has loaded — ES module imports are hoisted before dotenv.config() runs
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({
-            model:"gemini-2.5-flash",
-            generationConfig: {
-                responseMimeType: "application/json",
-            }
-        })
-       const result = await model.generateContent(prompt)
-       const aiResponse = result.response.text()  //this is a json string
-       const analysisData = JSON.parse(aiResponse)
 
-       
+        console.log("[6] Sending prompt to Gemini...");
+       const result = await model.generateContent(prompt)
+       console.log("[7] Gemini responded.");
+
+       const aiResponse = result.response.text()  //this is a json string
+       console.log("[8] Raw AI response length:", aiResponse?.length);
+
+       const analysisData = JSON.parse(aiResponse)
+       console.log("[9] JSON parsed — matchScore:", analysisData.matchScore);
+
        const newAnalysis = new Analysis({
          userId:req.userId,
          resumeId:resumeId,
@@ -70,22 +81,21 @@ import { Analysis } from "../models/analysisModel.js";
             suggestedProjects:analysisData.suggestedProjects,
             roadmap:analysisData.roadmap,
             good_project_questions:analysisData.good_project_questions,
-
-
-
-
          }
        })
+       console.log("[10] Saving analysis to DB...");
        await newAnalysis.save()
+       console.log("[11] Analysis saved successfully — id:", newAnalysis._id);
+
        return res.status(200).json(newAnalysis);
     }
     catch(e){
+        console.error("─── analyzeResume CRASH ───");
+        console.error("Message :", e.message);
+        console.error("Stack   :", e.stack);
+        console.error("──────────────────────────");
         return res.status(500).json({ message: "Error analyzing resume", error: e.message });
     }
-
-    
-
-
 }
 
 // Add this to your analysisController.js
