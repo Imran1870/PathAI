@@ -8,9 +8,12 @@ const uploadResumeToCloudinary = async(req,res)=>{
     if(!req.file){
        return  res.status(400).json({message:"No files uploaded"})
     }
+    let cloudinaryPublicId = null;
+
     try{
         const uploadResume = await cloudinary.uploader.upload(req.file.path,{resource_type:"raw"})
         if(!uploadResume)return res.status(500).json({message:"Error uplaoding file. Try again"})
+             cloudinaryPublicId = uploadResult.public_id; 
         
         //parsing from local file
         
@@ -50,7 +53,12 @@ const uploadResumeToCloudinary = async(req,res)=>{
     catch(e){
         // THE FAIL-SAFE: Burn the local file on FAILURE so your server doesn't crash over time
         if (req.file) {
-            fs.unlinkSync(req.file.path);
+            await fs.unlinkSync(req.file.path);
+        }
+        // Rollback Cloudinary upload if DB save failed
+        if (cloudinaryPublicId) {
+            await cloudinary.uploader.destroy(cloudinaryPublicId, { resource_type: "raw" })
+                .catch(err => console.error("Cloudinary rollback failed:", err));
         }
        return res.status(500).json({ message: `Error uploading file: ${e.message}` });
     }

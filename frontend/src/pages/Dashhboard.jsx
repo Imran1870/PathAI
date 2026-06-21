@@ -1,7 +1,6 @@
     import { useState } from "react";
-    import axios, { formToJSON } from "axios";
+    import axios from "axios";
     import { useAuth } from "../context/AuthContext.jsx";
-    import History from "./History.jsx"
     import { Link } from "react-router-dom";
     import { useNavigate } from "react-router-dom";
     export default function Dashboard() {
@@ -35,7 +34,7 @@
     }
 
     const handleHistory = async()=>{
-         navigate("/History")
+         navigate("/history")
     }
 
    

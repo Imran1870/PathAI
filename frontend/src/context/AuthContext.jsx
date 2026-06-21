@@ -1,6 +1,5 @@
 import {useState, createContext, useContext, useEffect} from "react"
 import axios from "axios"
-import { useNavigate, Link } from "react-router-dom";
 
 
 const AuthContext = createContext()

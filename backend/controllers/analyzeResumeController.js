@@ -7,9 +7,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
  const analyzeResume = async (req,res)=>{
     const {resumeId,targetRole,jobDescription,currentScenario} = req.body;
-    const {goal,year,currentSkills} = req.body.currentScenario;
+   // Guard before destructuring
+        if (!currentScenario || typeof currentScenario !== "object") {
+            return res.status(400).json({ message: "currentScenario is required" });
+        }
+        const { goal, year, currentSkills } = currentScenario;
     try{
-        const parsedResumeText = await Resume.findById(resumeId);
+        const parsedResumeText = await Resume.findById(resumeId).select("parsedText");
         if (!parsedResumeText) { return res.status(404).json({message: "Resume not found"}) }
 
 
@@ -37,7 +41,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                 "strengths": [<array of strings>],
                 "suggestedProjects": [ { "title": <string>, "description": <string> } ],
                 "roadmap": [ { "phase": <string>, "description": <string> } ],
-                "good_projet_questions": [ { "question": <string>, "answer": <string> } ]
+                "good_project_questions": [ { "question": <string>, "answer": <string> } ]
             }
         `;
         const model = genAI.getGenerativeModel({
@@ -65,7 +69,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
             strengths:analysisData.strengths,
             suggestedProjects:analysisData.suggestedProjects,
             roadmap:analysisData.roadmap,
-            good_project_questions:analysisData.good_projet_questions,
+            good_project_questions:analysisData.good_project_questions,
 
 
 

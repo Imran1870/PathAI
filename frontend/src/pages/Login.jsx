@@ -28,7 +28,7 @@ export default function Login(){
 
       // 2. Since login was successful (cookie is set!), ask the backend who we are
       const userRes = await axios.get("/auth/me");
-      setUser(userRes)
+      setUser(userRes.data)
       navigate("/");
 
 

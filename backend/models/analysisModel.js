@@ -12,6 +12,11 @@ const analysisSchema = new Schema({
      },
     targetRole:{type:String, required:true},
     jobDescription:{type:String, required:true},
+     currentScenario:{
+        goal:{type:String},
+        year:{type:Number},
+        currentSkills:{type:[String]},
+    },
     analysisResult:{
         matchScore:{type:Number},
         missingSkills:{type:[String]},
@@ -28,14 +33,12 @@ const analysisSchema = new Schema({
             question:{type:String},
             answer:{type:String}
         }],
-        currentScenario:{
-        goal:{type:String},
-        year:{type:Number},
-        currentSkills:{type:[String]},
-    },
+       
     },
    
 },{timestamps: true}
 )
+analysisSchema.index({ userId: 1, createdAt: -1 });
+
 const Analysis  =  mongoose.model('Analysis', analysisSchema);
 export {Analysis}
