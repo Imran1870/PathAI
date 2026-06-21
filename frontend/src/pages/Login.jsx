@@ -37,7 +37,7 @@ export default function Login() {
 
                 {/* Brand mark */}
                 <div className="mb-16">
-                    <span className="font-mono text-base font-bold tracking-tight text-[#1A1A1A]">Path<span className="text-[#C4704F]">AI</span></span>
+                    <span className="font-serif text-lg font-bold italic text-[#1A1A1A]">PathAI</span>
                 </div>
 
                 {/* Heading */}

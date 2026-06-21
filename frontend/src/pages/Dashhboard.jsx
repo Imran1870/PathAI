@@ -163,7 +163,7 @@ export default function Dashboard() {
     // Derived display values (computed from existing state — no new state)
     const score = analysisResult?.analysisResult?.matchScore;
     const scoreColor = score >= 70 ? "#6B8F71" : score >= 50 ? "#C8963E" : "#C4704F";
-    const scoreBg   = score >= 70 ? "#6B8F71" : score >= 50 ? "#C8963E" : "#C4704F";
+    const scoreBg = score >= 70 ? "#6B8F71" : score >= 50 ? "#C8963E" : "#C4704F";
     const scoreLabel = score >= 70 ? "Strong Match" : score >= 50 ? "Good Foundation" : "Needs Work";
 
     return (
