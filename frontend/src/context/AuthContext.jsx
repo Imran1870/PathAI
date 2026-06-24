@@ -4,6 +4,12 @@ import axios from "axios"
 
 const AuthContext = createContext()
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.DEV ? "http://localhost:5000/api" : "https://pathai-7fmi.onrender.com/api");
+
+axios.defaults.baseURL = API_BASE_URL;
+axios.defaults.withCredentials = true;
+
 
 export const useAuth = ()=>{
     return useContext(AuthContext)
@@ -12,8 +18,6 @@ export const useAuth = ()=>{
 export const AuthProvider = ({children})=>{
 const [user,setUser] = useState(null)
 const [loading,setLoading] = useState(true)
-axios.defaults.baseURL = "https://pathai-7fmi.onrender.com/api" || "http://localhost:5000/api";
-axios.defaults.withCredentials = true;
 
 
 

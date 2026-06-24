@@ -1,29 +1,87 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import mongoose from "mongoose";
 import { Resume } from "../models/resumeModel.js";
 import { Analysis } from "../models/analysisModel.js";
+
+const toStringArray = (value) => {
+    if (Array.isArray(value)) {
+        return value.map((item) => String(item).trim()).filter(Boolean);
+    }
+    if (typeof value === "string") {
+        return value.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+    return [];
+};
+
+const parseJsonResponse = (rawResponse) => {
+    try {
+        return JSON.parse(rawResponse);
+    } catch {
+        const cleaned = rawResponse
+            .replace(/^```(?:json)?/i, "")
+            .replace(/```$/i, "")
+            .trim();
+        const firstBrace = cleaned.indexOf("{");
+        const lastBrace = cleaned.lastIndexOf("}");
+
+        if (firstBrace === -1 || lastBrace === -1) {
+            throw new Error("AI response was not valid JSON.");
+        }
+
+        return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+    }
+};
+
+const normalizeAnalysis = (analysisData) => ({
+    matchScore: Number(analysisData.matchScore) || 0,
+    missingSkills: Array.isArray(analysisData.missingSkills) ? analysisData.missingSkills : [],
+    strengths: Array.isArray(analysisData.strengths) ? analysisData.strengths : [],
+    suggestedProjects: Array.isArray(analysisData.suggestedProjects) ? analysisData.suggestedProjects : [],
+    roadmap: Array.isArray(analysisData.roadmap) ? analysisData.roadmap : [],
+    good_project_questions: Array.isArray(analysisData.good_project_questions) ? analysisData.good_project_questions : [],
+});
 
 
  const analyzeResume = async (req,res)=>{
     const {resumeId,targetRole,jobDescription,currentScenario} = req.body;
     console.log("[1] analyzeResume called — resumeId:", resumeId, "| targetRole:", targetRole);
 
-   // Guard before destructuring
-        if (!currentScenario || typeof currentScenario !== "object") {
-            return res.status(400).json({ message: "currentScenario is required" });
-        }
-        const { goal, year, currentSkills } = currentScenario;
-        console.log("[2] currentScenario parsed — goal:", goal, "| year:", year, "| skills:", currentSkills);
+    if (!mongoose.Types.ObjectId.isValid(resumeId)) {
+        return res.status(400).json({ message: "A valid resumeId is required" });
+    }
+    if (typeof targetRole !== "string" || typeof jobDescription !== "string" || !targetRole.trim() || !jobDescription.trim()) {
+        return res.status(400).json({ message: "targetRole and jobDescription are required" });
+    }
+    if (!currentScenario || typeof currentScenario !== "object") {
+        return res.status(400).json({ message: "currentScenario is required" });
+    }
+    if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ message: "Gemini API key is not configured on the server." });
+    }
+
+    const { goal = "", year = "", currentSkills } = currentScenario;
+    const skillsArray = toStringArray(currentSkills);
+    const storedScenario = {
+        goal: String(goal).trim(),
+        year: String(year).trim(),
+        currentSkills: skillsArray,
+    };
+
+    console.log("[2] currentScenario parsed — goal:", storedScenario.goal, "| year:", storedScenario.year, "| skills:", skillsArray);
 
     try{
         console.log("[3] Looking up resume in DB...");
         const parsedResumeText = await Resume.findById(resumeId).select("parsedText");
         if (!parsedResumeText) { return res.status(404).json({message: "Resume not found"}) }
+        if (!parsedResumeText.parsedText?.trim()) {
+            return res.status(400).json({ message: "Resume text could not be parsed. Please upload a text-based PDF." });
+        }
         console.log("[4] Resume found. Text length:", parsedResumeText.parsedText?.length);
 
         console.log("[5] Initialising Gemini — key present:", !!process.env.GEMINI_API_KEY);
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model:"gemini-2.5-flash",
+            model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
             generationConfig: {
                 responseMimeType: "application/json",
             }
@@ -36,9 +94,9 @@ import { Analysis } from "../models/analysisModel.js";
             Analyze the resume against the job description.
             
             Candidate's Current Scenario:
-            - Year: ${year}
-            - Goal: ${goal}
-            - Current Skills: ${currentSkills.join(', ')}
+            - Year / Status: ${storedScenario.year}
+            - Goal: ${storedScenario.goal}
+            - Current Skills: ${skillsArray.join(', ')}
             
             Target Role: ${targetRole}
             Job Description: ${jobDescription}
@@ -64,24 +122,16 @@ import { Analysis } from "../models/analysisModel.js";
        const aiResponse = result.response.text()  //this is a json string
        console.log("[8] Raw AI response length:", aiResponse?.length);
 
-       const analysisData = JSON.parse(aiResponse)
+       const analysisData = normalizeAnalysis(parseJsonResponse(aiResponse));
        console.log("[9] JSON parsed — matchScore:", analysisData.matchScore);
 
        const newAnalysis = new Analysis({
          userId:req.userId,
          resumeId:resumeId,
-         targetRole:targetRole,
-         jobDescription:jobDescription,
-         currentScenario:currentScenario,
-         analysisResult:
-         {
-            matchScore:analysisData.matchScore,
-            missingSkills:analysisData.missingSkills,
-            strengths:analysisData.strengths,
-            suggestedProjects:analysisData.suggestedProjects,
-            roadmap:analysisData.roadmap,
-            good_project_questions:analysisData.good_project_questions,
-         }
+         targetRole:targetRole.trim(),
+         jobDescription:jobDescription.trim(),
+         currentScenario: storedScenario,
+         analysisResult: analysisData
        })
        console.log("[10] Saving analysis to DB...");
        await newAnalysis.save()

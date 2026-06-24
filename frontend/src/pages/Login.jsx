@@ -18,7 +18,7 @@ export default function Login() {
         try {
             await axios.post("/auth/login", { email, password })
             const userRes = await axios.get("/auth/me");
-            setUser(userRes)
+            setUser(userRes.data)
             navigate("/");
         } catch (err) {
             setError(err.response?.data?.message || "An error occurred during login")

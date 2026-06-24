@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios, { formToJSON } from "axios";
+import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import History from "./History.jsx"
 import { Link } from "react-router-dom";
@@ -132,7 +132,10 @@ export default function Dashboard() {
             // --- PHASE 2: Trigger the AI ---
             setLoadingStep("AI is analyzing your profile... this takes about 10 seconds.");
 
-            const skillsArray = currentSkills.split(",").map(skill => skill.trim());
+            const skillsArray = currentSkills
+                .split(",")
+                .map(skill => skill.trim())
+                .filter(Boolean);
 
             const aiPayload = {
                 resumeId: resumeId,

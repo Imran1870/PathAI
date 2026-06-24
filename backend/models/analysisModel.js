@@ -14,7 +14,7 @@ const analysisSchema = new Schema({
     jobDescription:{type:String, required:true},
      currentScenario:{
         goal:{type:String},
-        year:{type:Number},
+        year:{type:String},
         currentSkills:{type:[String]},
     },
     analysisResult:{
